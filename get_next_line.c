@@ -14,58 +14,46 @@
 #include "get_next_line.h"
 #include "stdio.h"
 
-// global for testing (zeroed)
+// global for testing
 char	buf[BUFFER_SIZE] = { 0 };
+size_t	total_bytes_read = 0;
+size_t	bytes_consumed = 0;
 
 char	*get_next_line(int fd)
 {
-	ssize_t	bytes_read;
-	size_t	line_len;
-	char	*found;
-	char	*new;
+	ssize_t bytes_read;
+	size_t len;
+	char *found;
+	char *new;
 
-	// buffer is empty
-	if (buf[0] == '\0')
+	// if buffer has leftover bytes
+	if (bytes_consumed < total_bytes_read)
 	{
-		bytes_read = read(fd, buf, sizeof(buf));
-		if (bytes_read < 0)
-		{
-			return (NULL);
-		}
-		found = memchr(buf, '\n', bytes_read);
-		while(found == NULL)
-		{
-			// do something
-			return (NULL);
-		}
-		// found line in buffer
-		line_len = found - buf + 1;
-		new = malloc(line_len + 1);
-		memcpy(new, buf, line_len);
-		new[line_len] = '\0';
-		// shift buffer to the left
-		memmove(buf, found + 1, bytes_read - line_len);
-		bzero(buf + bytes_read - line_len, line_len);
-		return (new);
+		found = memchr(buf, '\n', total_bytes_read - bytes_consumed);
+		len = found - buf + 1;
+		new = malloc(len + 1);
+		memcpy(new, buf, len);
+		new[len] = '\0';
+		//memcpy(buf, found + 1, total_bytes_read - bytes_consumed - len);
+		//buf[len] = '\0';
+		bytes_consumed += len;
+		return(new);
 	}
-	// buffer has leftover bytes
-	found = memchr(buf, '\n', sizeof(buf));
-	if (found == NULL)
+
+	// else buffer should be empty
+	bytes_read = read(fd, buf, sizeof(buf));
+	if (bytes_read < 0)
 	{
-		found = memchr(buf, 0, sizeof(buf));
-		if (found == NULL)
-		{
-			// problems
-			return (NULL);
-		}
+		return (NULL);
 	}
-	bytes_read = read(fd, found, sizeof(buf) - (found - buf) + 1);
-	found = memchr(found, '\n', bytes_read);
-	line_len = found - buf + 1;
-	new = malloc(line_len + 1);
-	memcpy(new, buf, line_len);
-	new[line_len] = '\0';
-	memmove(buf, found + 1, bytes_read - line_len);
-	bzero(buf + bytes_read - line_len, line_len);
-	return (new);
+	total_bytes_read += bytes_read;
+	found = memchr(buf, '\n', bytes_read);
+	len = found - buf + 1;
+	new = malloc(len + 1);
+	memcpy(new, buf, len);
+	new[len] = '\0';
+	memcpy(buf, found + 1, bytes_read - len);
+	buf[bytes_read - len] = '\0';
+	bytes_consumed += len;
+	return(new);
 }
