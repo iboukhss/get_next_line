@@ -1,4 +1,4 @@
-CC ?= clang
+CC = clang
 CFLAGS = -Wall -Wextra -g
 LDFLAGS = -L.
 LDLIBS = -ltap -lgnl -lbsd
@@ -12,7 +12,7 @@ ifdef BUFSIZ
 	CFLAGS += -DBUFFER_SIZE=$(BUFSIZ)
 endif
 
-ifdef DEBUG
+ifdef DBG
 	CFLAGS += -DDEBUG
 endif
 
