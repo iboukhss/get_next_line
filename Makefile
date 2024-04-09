@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -g -fsanitize=undefined
 LDFLAGS = -L.
 LDLIBS = -ltap -lgnl -lbsd
 

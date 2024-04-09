@@ -6,130 +6,96 @@
 /*   By: iboukhss <iboukhss@student.42luxe...>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/31 10:03:50 by iboukhss          #+#    #+#             */
-/*   Updated: 2024/04/07 19:57:25 by iboukhss         ###   ########.fr       */
+/*   Updated: 2024/04/09 21:25:19 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
+#include "debug.h"
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 
-void	ft_bzero(void *s, size_t n)
+/* Find the node with the corresponding fildes */
+t_list	*get_node_fd(t_list **head, int fd)
 {
-	unsigned char	*ptr;
+	t_list	*tmp;
+	t_list	*node;
 
-	ptr = s;
-	while (n--)
+	tmp = *head;
+	while (tmp)
 	{
-		*ptr = '\0';
-		++ptr;
+		if (tmp->fd == fd)
+			return (tmp);
+		if (!tmp->next)
+			break ;
+		tmp = tmp->next;
 	}
+	node = calloc(1, sizeof(*node));
+	if (!node)
+		return (NULL);
+	node->fd = fd;
+	node->rdp = node->buf;
+	if (*head == NULL)
+		*head = node;
+	else
+		tmp->next = node;
+	return (node);
 }
 
-void	*ft_calloc(size_t nmemb, size_t size)
+int	read_buffer(t_list *node)
 {
-	void	*ptr;
+	ssize_t	bytes_read;
 
-	if (size && nmemb > (size_t)-1 / size)
-		return (NULL);
-	ptr = malloc(nmemb * size);
-	if (!ptr)
-		return (NULL);
-	ft_bzero(ptr, nmemb * size);
-	return (ptr);
-}
-
-void	*ft_realloc(void *s, size_t old_size, size_t new_size)
-{
-	void	*ptr;
-
-	if (!new_size)
+	if (*node->rdp != '\0')
+		return (1);
+	bzero(node->buf, BUFFER_SIZE);
+	bytes_read = read(node->fd, node->buf, BUFFER_SIZE);
+	PRINT_BUFFER(node->buf, BUFFER_SIZE + 1, "|");
+	if (bytes_read > 0)
 	{
-		free(s);
-		return (NULL);
+		node->rdp = node->buf;
+		return (1);
 	}
-	ptr = calloc(1, new_size);
-	if (!ptr)
-		return (NULL);
-	if (!s)
-		return (ptr);
-	memcpy(ptr, s, old_size);
-	free(s);
-	return (ptr);
+	return (0);
 }
 
-t_list	*ft_lstnew(int fd)
+/* Not exactly following C standard implementation of realloc() */
+void	*ft_realloc(void *ptr, size_t old_size, size_t new_size)
 {
-	t_list	*new;
+	void	*new;
 
-	new = ft_calloc(1, sizeof(*new));
+	new = calloc(new_size, sizeof(char));
 	if (!new)
 		return (NULL);
-	new->fd = fd;
-	new->rdp = new->buf;
+	if (!ptr)
+		return (new);
+	memcpy(new, ptr, old_size);
+	free(ptr);
 	return (new);
 }
 
-void	ft_lstdelone(int fd, t_list **head)
+char	*get_line(t_list *node)
 {
-	t_list	*curr;
-	t_list	*prev;
+	char	*nl;
+	char	*line;
+	size_t	len;
+	size_t	buflen;
 
-	if (fd < 0 || !head)
-		return ;
-	if (!*head)
-		return ;
-	curr = *head;
-	prev = NULL;
-	while (curr && curr->fd != fd)
+	len = 0;
+	line = NULL;
+	while (read_buffer(node))
 	{
-		prev = curr;
-		curr = curr->next;
+		nl = strchrnul(node->rdp, '\n');
+		buflen = nl - node->rdp;
+		if (*nl == '\n')
+			++buflen;
+		line = ft_realloc(line, len, len + buflen + 1);
+		memcpy(line + len, node->rdp, buflen);
+		node->rdp += buflen;
+		len += buflen;
+		if (*nl == '\n')
+			break ;
 	}
-	if (!curr)
-		return ;
-	if (!prev)
-		*head = curr->next;
-	else
-		prev->next = curr->next;
-	free(curr);
-}
-
-void	ft_lstclear(t_list **head)
-{
-	if (!head)
-		return ;
-	while (*head)
-		ft_lstdelone((*head)->fd, head);
-}
-
-void	ft_lstadd_back(t_list **head, t_list *node)
-{
-	t_list	*tail;
-
-	if (!head || !node)
-		return ;
-	if (!*head)
-	{
-		*head = node;
-		return ;
-	}
-	tail = *head;
-	while (tail->next)
-		tail = tail->next;
-	tail->next = node;
-}
-
-t_list	*ft_lstfind(int fd, t_list **head)
-{
-	t_list	*find;
-
-	if (fd < 0 || !head)
-		return (NULL);
-	if (!*head)
-		return (NULL);
-	find = *head;
-	while (find && find->fd != fd)
-		find = find->next;
-	return (find);
+	return (line);
 }

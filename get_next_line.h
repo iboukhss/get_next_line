@@ -6,7 +6,7 @@
 /*   By: iboukhss <iboukhss@student.42luxe...>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/31 10:02:32 by iboukhss          #+#    #+#             */
-/*   Updated: 2024/04/07 19:56:51 by iboukhss         ###   ########.fr       */
+/*   Updated: 2024/04/09 20:02:43 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,15 +27,10 @@ typedef struct s_list
 }	t_list;
 
 char	*get_next_line(int fd);
+t_list	*get_node_fd(t_list **head, int fd);
+int		read_buffer(t_list *node);
+char	*get_line(t_list *node);
 
-void	ft_bzero(void *s, size_t n);
-void	*ft_calloc(size_t nmemb, size_t size);
-void	*ft_realloc(void *s, size_t old_size, size_t new_size);
-
-t_list	*ft_lstnew(int fd);
-void	ft_lstdelone(int fd, t_list **head);
-void	ft_lstclear(t_list **head);
-void	ft_lstadd_back(t_list **head, t_list *node);
-t_list	*ft_lstfind(int fd, t_list **head);
+void	*ft_realloc(void *ptr, size_t old_size, size_t new_size);
 
 #endif
