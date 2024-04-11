@@ -6,96 +6,83 @@
 /*   By: iboukhss <iboukhss@student.42luxe...>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/31 10:03:50 by iboukhss          #+#    #+#             */
-/*   Updated: 2024/04/09 21:25:19 by iboukhss         ###   ########.fr       */
+/*   Updated: 2024/04/11 23:18:57 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
-#include "debug.h"
 #include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+#include "get_next_line.h"
 
-/* Find the node with the corresponding fildes */
-t_list	*get_node_fd(t_list **head, int fd)
+void	*ft_memset(void *s, int c, size_t n)
 {
-	t_list	*tmp;
-	t_list	*node;
+	unsigned char	*ptr;
 
-	tmp = *head;
-	while (tmp)
+	ptr = s;
+	while (n--)
 	{
-		if (tmp->fd == fd)
-			return (tmp);
-		if (!tmp->next)
-			break ;
-		tmp = tmp->next;
+		*ptr = (unsigned char)c;
+		++ptr;
 	}
-	node = calloc(1, sizeof(*node));
-	if (!node)
+	return (s);
+}
+
+void	*ft_calloc(size_t nmemb, size_t size)
+{
+	void	*ptr;
+
+	if (size && nmemb > (size_t)-1 / size)
 		return (NULL);
-	node->fd = fd;
-	node->rdp = node->buf;
-	if (*head == NULL)
-		*head = node;
-	else
-		tmp->next = node;
-	return (node);
+	ptr = malloc(nmemb * size);
+	if (!ptr)
+		return (NULL);
+	ft_memset(ptr, 0, nmemb * size);
+	return (ptr);
 }
 
-int	read_buffer(t_list *node)
+void	*ft_memcpy(void *dest, const void *src, size_t n)
 {
-	ssize_t	bytes_read;
+	unsigned char		*dp;
+	const unsigned char	*sp;
 
-	if (*node->rdp != '\0')
-		return (1);
-	bzero(node->buf, BUFFER_SIZE);
-	bytes_read = read(node->fd, node->buf, BUFFER_SIZE);
-	PRINT_BUFFER(node->buf, BUFFER_SIZE + 1, "|");
-	if (bytes_read > 0)
+	dp = dest;
+	sp = src;
+	while (n--)
 	{
-		node->rdp = node->buf;
-		return (1);
+		*dp = *sp;
+		++dp;
+		++sp;
 	}
-	return (0);
+	return (dest);
 }
 
-/* Not exactly following C standard implementation of realloc() */
+/**
+ * Excerpt from realloc(3) manual page
+ * 
+ * Portable programs should not use private memory allocators,
+ * as POSIX and the C standard do not allow replacement of malloc(),
+ * free(), calloc(), and realloc().
+ */
 void	*ft_realloc(void *ptr, size_t old_size, size_t new_size)
 {
-	void	*new;
+	unsigned char	*new;
 
-	new = calloc(new_size, sizeof(char));
+	new = malloc(new_size * sizeof(*new));
 	if (!new)
 		return (NULL);
 	if (!ptr)
 		return (new);
-	memcpy(new, ptr, old_size);
+	ft_memcpy(new, ptr, old_size);
 	free(ptr);
 	return (new);
 }
 
-char	*get_line(t_list *node)
+char	*ft_strchrnul(const char *s, int c)
 {
-	char	*nl;
-	char	*line;
-	size_t	len;
-	size_t	buflen;
-
-	len = 0;
-	line = NULL;
-	while (read_buffer(node))
+	while (*s)
 	{
-		nl = strchrnul(node->rdp, '\n');
-		buflen = nl - node->rdp;
-		if (*nl == '\n')
-			++buflen;
-		line = ft_realloc(line, len, len + buflen + 1);
-		memcpy(line + len, node->rdp, buflen);
-		node->rdp += buflen;
-		len += buflen;
-		if (*nl == '\n')
-			break ;
+		if (*s == (unsigned char)c)
+			return ((char *)s);
+		++s;
 	}
-	return (line);
+	return ((char *)s);
 }
