@@ -1,9 +1,9 @@
-#include "../tap.h"
-#include "../get_next_line.h"
+#include "tap.h"
+#include "get_next_line.h"
 
 #include <fcntl.h>		// provides open()
-#include <unistd.h>		// provides read() and lseek()
 #include <string.h>
+#include <unistd.h>		// provides read() and lseek()
 
 int	main(void)
 {

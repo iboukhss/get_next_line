@@ -6,12 +6,12 @@
 /*   By: iboukhss <iboukhss@student.42luxe...>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/11 23:35:22 by iboukhss          #+#    #+#             */
-/*   Updated: 2024/04/11 23:35:24 by iboukhss         ###   ########.fr       */
+/*   Updated: 2024/05/13 22:04:48 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <stdlib.h>
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 void	*ft_memset(void *s, int c, size_t n)
 {

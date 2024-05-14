@@ -1,43 +1,46 @@
+NAME = libgnl.a
 CC = clang
-CFLAGS = -Wall -Wextra -g -fsanitize=undefined
+CFLAGS = -Wall -Wextra -g -MMD -fsanitize=undefined
 LDFLAGS = -L.
 LDLIBS = -ltap -lgnl -lbsd
 
+# Main sources
 SRCS = get_next_line.c get_next_line_utils.c
 OBJS = $(SRCS:.c=.o)
-TEST_SRCS = $(wildcard t/*.c)
+INCS = get_next_line.h
+
+# Bonus sources
+BONUS_SRCS = get_next_line_bonus.c get_next_line_utils_bonus.c
+BONUS_OBJS = $(BONUS_SRCS:.c=.o)
+BONUS_INCS = get_next_line_bonus.h
+
+# Test sources
+TEST_SRCS = t/get_next_line.c
 TEST_EXES = $(TEST_SRCS:.c=.t)
 
-ifdef BUFSIZ
-	CFLAGS += -DBUFFER_SIZE=$(BUFSIZ)
-endif
-
-ifdef DBG
-	CFLAGS += -DDEBUG
-endif
-
-all: $(TEST_EXES)
-
-libtap.a: tap.o
-	ar rcs $@ $<
-
-tap.o: tap.c tap.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+all: $(NAME)
 
 libgnl.a: $(OBJS)
 	ar rcs $@ $^
 
-%.o: %.c get_next_line.h debug.h
+%.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+tests: $(TEST_EXES)
+
 %.t: %.c libtap.a libgnl.a
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CFLAGS) -I. -o $@ $< $(LDFLAGS) $(LDLIBS)
+
+libtap.a: t/tap.c
+	$(CC) $(CFLAGS) -c -o t/tap.o $<
+	ar rcs $@ t/tap.o
 
 norm:
-	-norminette $(SRCS) get_next_line.h
+	-norminette $(SRCS) $(INCS) $(BONUS_SRCS) $(BONUS_INCS)
 
 clean:
-	rm -f *.o
+	rm -f *.o t/*.o
+	rm -f *.d t/*.d
 
 fclean: clean
 	rm -f *.a
@@ -45,4 +48,6 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all norm clean fclean re
+-include $(DEPS)
+
+.PHONY: all norm tests clean fclean re
